@@ -1,0 +1,10 @@
+@class_name = 'P1Parser'
+
+line : c=chunk+ EOF { c };
+
+chunk : c=bracket | square | curly | angle { c };
+
+bracket : LB chunk* RB;
+square : LS chunk* RS;
+curly : LC chunk* RC;
+angle : LA chunk* RA;

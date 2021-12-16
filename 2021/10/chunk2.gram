@@ -1,0 +1,24 @@
+@class_name = 'P2Parser'
+@inherits_from = 'part2.P2Base'
+@header = '
+import part2
+
+'
+
+line : c=chunk+ EOF { c };
+
+chunk : c=bracket | square | curly | angle { c };
+
+bracket
+    : LB chunk* EOF { self.inc_score(")") };
+    : LB chunk* RB;
+square
+    : LS chunk* EOF { self.inc_score("]") };
+    : LS chunk* RS;
+curly
+    : LC chunk* EOF { self.inc_score("}") };
+    : LC chunk* RC;
+angle
+    : LA chunk* EOF { self.inc_score(">") };
+    : LA chunk* RA;
+
