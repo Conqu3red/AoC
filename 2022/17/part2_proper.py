@@ -1,6 +1,7 @@
 from typing import *
 import math
 from dataclasses import dataclass
+import time
 
 def load():
     with open("input.txt") as f:
@@ -187,6 +188,7 @@ def main():
     wind_index = 0
     rock_index = 0
     LIMIT = 1_000_000_000_000
+    s = time.time()
     while rock_index < LIMIT:
         if rock_index % 10_000 == 0:
             print(f"{100 * rock_index / 1_000_000_000_000:.6f}%")
@@ -225,6 +227,8 @@ def main():
 
         
         rock_index += 1
+    
+    e = time.time()
 
 
     max_field_y = -1
@@ -235,6 +239,7 @@ def main():
             break
     
     print("Part 2:", field.floor_y + max_field_y + 2)
+    print(f"Completed in {e - s:.2f}s")
 
 
 if __name__ == "__main__":
