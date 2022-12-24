@@ -1,6 +1,6 @@
 from typing import *
 import time
-import collections
+import curses
 
 def load():
     with open("input.txt") as f:
@@ -77,47 +77,53 @@ def generate_blizzard_states(walls: Set[Tuple[int, int]], start_blizzards: Dict[
     
     return unique_frozen_states
 
-def render_board(walls: Set[Tuple[int, int]], blizzards: Set[Tuple[int, int]], pos: Tuple[int, int]):
+def render_board(stdscr, walls: Set[Tuple[int, int]], blizzards: Set[Tuple[int, int]], positions: Set[Tuple[int, int]]):
     min_x = min(x for x, _ in walls)
     min_y = min(y for _, y in walls)
     max_x = max(x for x, _ in walls)
     max_y = max(y for _, y in walls)
 
     for y in range(min_y, max_y + 1):
+        line = ""
         for x in range(min_x, max_x + 1):
             if (x, y) in walls:
-                print("#", end="")
+                line += "#"
             elif (x, y) in blizzards:
-                print("%", end="")
-            elif (x, y) == pos:
-                print("E", end="")
+                line += "-"
+            elif (x, y) in positions:
+                line += "E"
             else:
-                print(".", end="")
-        print()
+                line += " "
+        stdscr.addstr(y + 1, 0, line)
 
 
-def fastest_route(walls: Set[Tuple[int, int]], blizzard_states: List[Set[Tuple[int, int]]], pos: Tuple[int, int], target: Tuple[int, int], start_time: int = 0):
+def fastest_route(stdscr, walls: Set[Tuple[int, int]], blizzard_states: List[Set[Tuple[int, int]]], pos: Tuple[int, int], target: Tuple[int, int], start_time: int = 0):
     max_wall_y = max(y for _, y in walls)
-    visited: Set[Tuple[int, Tuple[int, int]]] = {(start_time, pos)}
-    to_visit = collections.deque()
-    to_visit.append((start_time, pos))
+    minute_locations: Set[Tuple[int, int]] = {pos}
 
-    while to_visit:
-        time, (x, y) =  to_visit.popleft()
-        #print(time, x, y)
-        if (x, y) == target:
-            #print("FOUND", time)
-            return time
-        time += 1
+    cur_time = start_time
+    while True:
+        stdscr.addstr(0, 0, f"Minute {cur_time}")
+        render_board(stdscr, walls, blizzard_states[cur_time % len(blizzard_states)], minute_locations)
+        stdscr.refresh()
+        time.sleep(0.01)
+        next_minute_locations: Set[Tuple[int, int]] = set()
+        cur_time += 1
+        for x, y in minute_locations:
+            #print(time, x, y)
+            if (x, y) == target:
+                #print("FOUND", time)
+                return cur_time - 1
 
-        for (dx, dy) in ((0, -1), (1, 0), (-1, 0), (0, 0), (0, 1)):
-            nx = x + dx
-            ny = y + dy
-            if ny < 0 or ny > max_wall_y or (nx, ny) in walls or (nx, ny) in (blizzard_states[time % len(blizzard_states)]) or (time, (nx, ny)) in visited:
-                continue
-            
-            visited.add((time, (nx, ny)))
-            to_visit.append((time, (nx, ny)))
+            for (dx, dy) in ((0, -1), (1, 0), (-1, 0), (0, 0), (0, 1)):
+                nx = x + dx
+                ny = y + dy
+                if ny < 0 or ny > max_wall_y or (nx, ny) in walls or (nx, ny) in (blizzard_states[cur_time % len(blizzard_states)]):
+                    continue
+                
+                next_minute_locations.add((nx, ny))
+
+        minute_locations = next_minute_locations
 
 
 
@@ -130,16 +136,41 @@ blizzard_states = generate_blizzard_states(walls, blizzards)
 #    render_board(walls, b, (1, 0))
 #    print()
 
-s = time.time()
 
-there_time = fastest_route(walls, blizzard_states, start_pos, target_pos)
-print("Part 1:", there_time)
+def screen_init(stdscr):
+    stdscr.clear()
+    stdscr.refresh()
+    stdscr.scrollok(1)
 
-back_to_start_time = fastest_route(walls, blizzard_states, target_pos, start_pos, start_time=there_time)
-print("Time start-end-start:", back_to_start_time)
-end_again_time = fastest_route(walls, blizzard_states, start_pos, target_pos, start_time=back_to_start_time)
-print("Time start-end-start-end:", end_again_time)
-print("Part 2:", end_again_time)
+    height, width = stdscr.getmaxyx()
+    max_wall_y = max(y for _, y in walls)
 
-e = time.time()
-print(f"Completed in {e - s:.2f}s")
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
+
+    s = time.time()
+
+    there_time = fastest_route(stdscr, walls, blizzard_states, start_pos, target_pos)
+    stdscr.addstr(max_wall_y + 2, 1, f"Part 1: {there_time}")
+    stdscr.refresh()
+
+    back_to_start_time = fastest_route(stdscr, walls, blizzard_states, target_pos, start_pos, start_time=there_time)
+    stdscr.addstr(max_wall_y + 3, 1, f"Time start-end-start: {back_to_start_time}")
+    stdscr.refresh()
+    end_again_time = fastest_route(stdscr, walls, blizzard_states, start_pos, target_pos, start_time=back_to_start_time)
+    stdscr.addstr(max_wall_y + 4, 1, f"Time start-end-start-end: {end_again_time}")
+    stdscr.addstr(max_wall_y + 5, 1, f"Part 2: {end_again_time}")
+
+    e = time.time()
+    stdscr.addstr(max_wall_y + 6, 1, f"Completed in {e - s:.2f}s")
+    stdscr.refresh()
+
+    stdscr.getch()
+
+    curses.endwin()
+
+def main():
+    curses.wrapper(screen_init)
+
+if __name__ == "__main__":
+    main()

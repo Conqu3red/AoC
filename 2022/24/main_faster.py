@@ -1,6 +1,5 @@
 from typing import *
 import time
-import collections
 
 def load():
     with open("input.txt") as f:
@@ -98,26 +97,28 @@ def render_board(walls: Set[Tuple[int, int]], blizzards: Set[Tuple[int, int]], p
 
 def fastest_route(walls: Set[Tuple[int, int]], blizzard_states: List[Set[Tuple[int, int]]], pos: Tuple[int, int], target: Tuple[int, int], start_time: int = 0):
     max_wall_y = max(y for _, y in walls)
-    visited: Set[Tuple[int, Tuple[int, int]]] = {(start_time, pos)}
-    to_visit = collections.deque()
-    to_visit.append((start_time, pos))
+    minute_locations: Set[Tuple[int, int]] = {pos}
 
-    while to_visit:
-        time, (x, y) =  to_visit.popleft()
-        #print(time, x, y)
-        if (x, y) == target:
-            #print("FOUND", time)
-            return time
+    time = start_time
+
+    while True:
+        next_minute_locations: Set[Tuple[int, int]] = set()
         time += 1
+        for x, y in minute_locations:
+            #print(time, x, y)
+            if (x, y) == target:
+                #print("FOUND", time)
+                return time - 1
 
-        for (dx, dy) in ((0, -1), (1, 0), (-1, 0), (0, 0), (0, 1)):
-            nx = x + dx
-            ny = y + dy
-            if ny < 0 or ny > max_wall_y or (nx, ny) in walls or (nx, ny) in (blizzard_states[time % len(blizzard_states)]) or (time, (nx, ny)) in visited:
-                continue
-            
-            visited.add((time, (nx, ny)))
-            to_visit.append((time, (nx, ny)))
+            for (dx, dy) in ((0, -1), (1, 0), (-1, 0), (0, 0), (0, 1)):
+                nx = x + dx
+                ny = y + dy
+                if ny < 0 or ny > max_wall_y or (nx, ny) in walls or (nx, ny) in (blizzard_states[time % len(blizzard_states)]):
+                    continue
+                
+                next_minute_locations.add((nx, ny))
+
+        minute_locations = next_minute_locations
 
 
 
