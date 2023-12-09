@@ -6,8 +6,8 @@ def load():
     
     graph = {}
     for line in lines.split("\n"):
-        key, children = line.split("=")
-        graph[key.strip()] = children.strip()[1:-1].split(", ")
+        key, children = line.split(" = ")
+        graph[key] = children[1:-1].split(", ")
     return commands, graph
 
 def get_cycle(commands, graph, location, any_z: bool):
