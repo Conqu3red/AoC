@@ -4,9 +4,7 @@ def process(seq: list[int]):
         seq = [seq[i + 1] - seq[i] for i in range(len(seq) - 1)]
         seqs.append(seq)
     
-    after = sum(seq[-1] for seq in seqs)
-    before = sum((1 if i % 2 == 0 else -1) * seq[0] for i, seq in enumerate(seqs))
-    return after, before
+    return sum(seq[-1] for seq in seqs)
 
 def main():
     with open("input.txt") as f:
@@ -14,8 +12,8 @@ def main():
     
     sequences = [[int(n) for n in line.split()] for line in lines]
 
-    p1 = sum(process(seq)[0] for seq in sequences)
-    p2 = sum(process(seq)[1] for seq in sequences)
+    p1 = sum(process(seq) for seq in sequences)
+    p2 = sum(process([*reversed(seq)]) for seq in sequences)
 
     print(f"Part 1: {p1}")
     print(f"Part 2: {p2}")
